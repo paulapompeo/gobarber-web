@@ -19,7 +19,11 @@ interface AuthContextData {
   signOut(): void;
 }
 
+// criando um contexto
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
+
+// metodo de autenticaçao armazenado dentro do contexto (para ser acessado de qualquer lugar)
+// ex: Login e Logout
 const AuthProvider: React.FC = ({ children }) => {
   const [data, setData] = useState<AuthState>(() => {
     const token = localStorage.getItem('@GoBarber:token');
@@ -63,7 +67,7 @@ function useAuth(): AuthContextData {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error('UseAut must be used with an AuthProvider');
+    throw new Error('UseAuth must be used within an AuthProvider');
   }
 
   return context;
