@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { isToday, format } from 'date-fns';
+import { isToday, format, parseISO } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import DayPicker, { DayModifiers } from 'react-day-picker';
 import 'react-day-picker/lib/style.css';
@@ -30,6 +30,7 @@ interface MonthAvailabilityItem {
 interface Appointment {
   id: string;
   date: string;
+  hourFormatted: string;
   user: {
     name: string;
     // eslint-disable-next-line camelcase
@@ -74,7 +75,7 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     api
-      .get('/appointments/me', {
+      .get<Appointment[]>('/appointments/me', {
         params: {
           year: selectedDate.getFullYear(),
           month: selectedDate.getMonth() + 1,
@@ -82,8 +83,13 @@ const Dashboard: React.FC = () => {
         },
       })
       .then(response => {
-        setAppointments(response.data);
-        console.log(response.data);
+        const appointmentsFormatted = response.data.map(appointment => {
+          return {
+            ...appointment,
+            hourFormatted: format(parseISO(appointment.date), 'HH:mm'),
+          };
+        });
+        setAppointments(appointmentsFormatted);
       });
   }, [selectedDate]);
 
@@ -111,6 +117,18 @@ const Dashboard: React.FC = () => {
       locale: ptBR,
     });
   }, [selectedDate]);
+
+  const morningAppointments = useMemo(() => {
+    return appointments.filter(appointment => {
+      return parseISO(appointment.date).getHours() < 12;
+    });
+  }, [appointments]);
+
+  const afternoonAppointments = useMemo(() => {
+    return appointments.filter(appointment => {
+      return parseISO(appointment.date).getHours() >= 12;
+    });
+  }, [appointments]);
 
   return (
     <Container>
@@ -153,7 +171,7 @@ const Dashboard: React.FC = () => {
               <strong>Livia Carneiro</strong>
               <span>
                 <FiClock />
-                08:00
+                8:00
               </span>
             </div>
           </NextAppointment>
@@ -161,56 +179,45 @@ const Dashboard: React.FC = () => {
           <Section>
             <strong>Manhã</strong>
 
-            <Appointment>
-              <span>
-                <FiClock />
-                08:00
-              </span>
+            {morningAppointments.map(appointment => (
+              <Appointment key={appointment.id}>
+                <span>
+                  <FiClock />
+                  {appointment.hourFormatted}
+                </span>
 
-              <div>
-                <img
-                  src="https://media-exp1.licdn.com/dms/image/C4D03AQEe_ckn7iJvRg/profile-displayphoto-shrink_800_800/0?e=1608768000&v=beta&t=9H_1m-NuBrCesnRLUJVzTVGD0bzVr6lPyvScojWSaSw"
-                  alt="Livia Carneiro"
-                />
+                <div>
+                  <img
+                    src={appointment.user.avatar_url}
+                    alt={appointment.user.name}
+                  />
 
-                <strong>Livia Carneiro</strong>
-              </div>
-            </Appointment>
-
-            <Appointment>
-              <span>
-                <FiClock />
-                08:00
-              </span>
-
-              <div>
-                <img
-                  src="https://media-exp1.licdn.com/dms/image/C4D03AQEe_ckn7iJvRg/profile-displayphoto-shrink_800_800/0?e=1608768000&v=beta&t=9H_1m-NuBrCesnRLUJVzTVGD0bzVr6lPyvScojWSaSw"
-                  alt="Livia Carneiro"
-                />
-
-                <strong>Livia Carneiro</strong>
-              </div>
-            </Appointment>
+                  <strong>{appointment.user.name}</strong>
+                </div>
+              </Appointment>
+            ))}
           </Section>
+
           <Section>
             <strong>Tarde</strong>
 
-            <Appointment>
-              <span>
-                <FiClock />
-                08:00
-              </span>
+            {afternoonAppointments.map(appointment => (
+              <Appointment key={appointment.id}>
+                <span>
+                  <FiClock />
+                  {appointment.hourFormatted}
+                </span>
 
-              <div>
-                <img
-                  src="https://media-exp1.licdn.com/dms/image/C4D03AQEe_ckn7iJvRg/profile-displayphoto-shrink_800_800/0?e=1608768000&v=beta&t=9H_1m-NuBrCesnRLUJVzTVGD0bzVr6lPyvScojWSaSw"
-                  alt="Livia Carneiro"
-                />
+                <div>
+                  <img
+                    src={appointment.user.avatar_url}
+                    alt={appointment.user.name}
+                  />
 
-                <strong>Livia Carneiro</strong>
-              </div>
-            </Appointment>
+                  <strong>{appointment.user.name}</strong>
+                </div>
+              </Appointment>
+            ))}
           </Section>
         </Schedule>
         <Calendar>
