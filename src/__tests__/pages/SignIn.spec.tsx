@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
+import { render, fireEvent, waitFor } from '@testing-library/react';
 import SignIn from '../../pages/SignIn';
 
 // descobrir se o history foi chamado
@@ -14,8 +14,16 @@ jest.mock('react-router-dom', () => {
   };
 });
 
+jest.mock('../../hooks/auth', () => {
+  return {
+    useAuth: () => ({
+      signIn: jest.fn(),
+    }),
+  };
+});
+
 describe('SignIn Page', () => {
-  it('should be able to SignIn', () => {
+  it('should be able to SignIn', async () => {
     const { getByPlaceholderText, getByText } = render(<SignIn />);
 
     const emailField = getByPlaceholderText('E-mail');
@@ -30,7 +38,9 @@ describe('SignIn Page', () => {
     // simular evento de click
     fireEvent.click(buttonElement);
 
-    // acao visual que ocorre apos as acoes acima: redireciona para outra pagina
-    expect(mockedHistoryPush).toHaveBeenCalledWith('/dashboard');
+    await waitFor(() => {
+      // acao visual que ocorre apos as acoes acima: redireciona para outra pagina
+      expect(mockedHistoryPush).toHaveBeenCalledWith('/dashboard');
+    });
   });
 });
