@@ -5,8 +5,9 @@ import SignIn from '../../pages/SignIn';
 // modulos
 jest.mock('react-router-dom', () => {
   return {
-    useHistory: jest.fn(),
+    useHistory: jest.fn(), // fn -> funcao vazia
     Link: ({ children }: { children: React.ReactNode }) => children,
+    // ReactNode-> qualquer conteudo que um componente react poderia receber
   };
 });
 
